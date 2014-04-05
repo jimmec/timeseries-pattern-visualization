@@ -12,6 +12,7 @@ properties when processing data from other sources!
 import csv
 import math
 import llist
+import heapdict as hd
 
 def parse_csv(filepath):
     # assume csv rows are in chronological order
@@ -43,17 +44,14 @@ def sqr_residual(segment, data):
     # number of intermediate points
     n = segment[1][0] - segment[0][0]
 
-    pred = [segment[0][1] + m*i for i in range(1,n)]
-    value = [data[segment[0][0] + i] for i in range(1,n)]
-    sqr_residual = [(pred[i] - value[i])**2 for i in range(n-1)]
+    pred = [segment[0][1] + m*i for i in xrange(1,n)]
+    value = [data[segment[0][0] + i] for i in xrange(1,n)]
+    sqr_residual = [(pred[i] - value[i])**2 for i in xrange(n-1)]
 
     return sum(sqr_residual)
 
-def merge_segs(seg1, seg2, data):
-    new_seg = (seg1[0], seg2[1])
-    res = sqr_residual(new_seg)
-
-    return (new_seg, r)
+def merge_segs(seg1, seg2):
+    return (seg1[0], seg2[1])
 
 def bottom_up(data, k, max_error=0):
     '''
@@ -64,9 +62,23 @@ def bottom_up(data, k, max_error=0):
     n = len(data)
 
     # split into segments of length 2
-    # data is now ((index, value), (index, value))
-    segments = [((2*i,data[2*i]), (2*i+1,data[2*i+1])) for i in range(n/2)]
+    # a segment is of the form ((index, value), (index, value))
+    segments = [((2*i,data[2*i]), (2*i+1,data[2*i+1])) for i in xrange(n/2)]
 
-    residuals = llist.dlist()
+    # create linked list of residuals for each pair 
+    # of consecutive segments
+    residuals = llist.dllist()
 
-    for i in range(len(segments)-1)
+    for i in xrange(len(segments)-1):
+        left = segments[i]
+        right = segments[i+1]
+        res = sqr_residual(merge_segs(left, right), data)
+        seg_pair = (left, right, res)
+        residuals.append(seg_pair)
+
+    min_heap = hd.heapdict()
+
+    for r in residuals:
+        min_heap[r] = r[2]
+
+    return None
