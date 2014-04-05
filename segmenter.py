@@ -11,6 +11,7 @@ properties when processing data from other sources!
 import csv
 import itertools
 import math
+import heapdict
 
 
 def parse_csv(filepath):
@@ -85,6 +86,15 @@ def bottom_up(ts_data, avg_seg_length, max_error=0):
     A segment is just a pair of points from the original time series
     ((date0,p0),(date1,p1)), the start and the end of the segment.
     '''
+    # do the initial round of merging each 2i-1 and 2i points
+    merged = [create_segment(p) for p in grouper(ts_data,2)]
+
+    # calculate errors for each neighbouring segments
+    errors = [(calculate_errors(create_segment([p0,p1])),p0) for 
+                (p0,p1) in pairwise(merged)]
+
+    # heapify the list
+    heapq.heapify(errors)
     
     return None
 
