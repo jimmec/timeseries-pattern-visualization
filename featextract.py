@@ -15,33 +15,27 @@ E.g. input: list of segments [p0,p1,p2,...,pN]
                 ,((pN-L,pN),(f0,f1,...,fL))]
 
 '''
+import itertools
 
+def compute_simple_trend_features(window):
+    '''Given a window of N points, compute N+1 trend features as described
+    in http://www.cs.ucsb.edu/~nanli/publications/stock_pattern.pdf
+    '''
+    midfeats = [(window[i]-window[i-1])/(window[i-1]-window[i-2]) 
+        for i in xrange(2,len(window))]
+    feats = [(window[1]-window[0])/abs(window[1]-window[0])]
+        .extend(midfeats)
+        .append((window[-1]-window[1])/abs(window[2]-window[1]))
 
-def parse_csv(filepath):
-    # read csv into memory as a list of (INDEX,DATE,CLOSE_PRICE) tuples
-    with open(filepath, 'rb') as csvfile:
-        reader = csv.DictReader(csvfile)
-        data =  [(row['Date'],float(row['Adj Close'])) for row in reader]
+    return tuple(feats)
 
-    # truncate odd length data
-    if len(data)%2 == 1:
-        data = data[:-1]
     
-    # reverse the list, so that oldest date is at data[0]
-    data = data[::-1]
-    # enumerate it for the index
-    return [(index,d,p) for index,(d,p) in enumerate(data)]
-
-
-if __name__ == "__main__":
-    import argparse
-    aparser = argparse.ArgumentParser(description=
-                'Extract features from a time series')
-    aparser.add_argument(dest='csvpath', help='path to .csv file')
-
-    args = aparser.parse_args()
+def extract_features(data, length, compute_feature):
+    '''Given data as a list of (index,value) pairs,
+    and length<len(data),
+    extracts features for sliding windows of width length
+    '''
+    return [((data[i],data[i+n]),compute_feature(data[i:i+n])) 
+        for i in xrange(len(data)-n+1)]
     
-    # parse the csv file specified on commandline
-    data = parse_csv(args.csvpath)
 
-   
