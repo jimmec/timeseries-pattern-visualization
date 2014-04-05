@@ -19,17 +19,20 @@ def parse_csv(filepath):
     # read csv into memory as a list of (INDEX,DATE,CLOSE_PRICE) tuples
     with open(filepath, 'rb') as csvfile:
         reader = csv.DictReader(csvfile)
-        data =  [float(row['Adj Close']) for row in reader]
+        combined_data =  [(row['Date'], float(row['Adj Close'])) for row in reader]
 
     # truncate odd length data
-    if len(data)%2 == 1:
-        data = data[:-1]
+    if len(combined_data)%2 == 1:
+        combined_data = combined_data[:-1]
+
+    # extract dates and data into two separate lists
+    dates, data = zip(*combined_data)
 
     # reverse order
     data = data[::-1]
     
     # enumerate it for the index
-    return data
+    return dates, data
 
 def sqr_residual(segment, data):
     '''
@@ -53,10 +56,23 @@ def sqr_residual(segment, data):
 def merge_segs(seg1, seg2):
     return (seg1[0], seg2[1])
 
-def bottom_up(data, k, max_error=0):
+def bottom_up(data, k, max_error=float('nan')):
     '''
     Merge time series data points to produce trend segments
     using bottom-up method where k is the average segment length.
+
+    The data should be a list where each element is of the form
+    (index, value).
+
+    Terminates when average segment length is more than k.
+    
+    OR 
+    
+    If max_error > 0, when the maximum error of any 
+    segment (in terms of a residual with the original data underlying the 
+    segment) has reached the limit.
+    
+    Returns a subset of the data.
     '''
 
     ## INITIALIZATION STEP
@@ -87,7 +103,9 @@ def bottom_up(data, k, max_error=0):
     ## MERGE STEP
     # merge segments while number of segments at most n/k
     while len(pairs) > n/k:
-        pair = res_heap.popitem()[0]
+        pair, res = res_heap.popitem()
+        if (res > max_error):
+            break
 
         new_seg = merge_segs(pair.value[0], pair.value[1])
 
