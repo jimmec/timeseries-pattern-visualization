@@ -59,26 +59,74 @@ def bottom_up(data, k, max_error=0):
     using bottom-up method where k is the average segment length.
     '''
 
+    ## INITIALIZATION STEP
     n = len(data)
 
     # split into segments of length 2
     # a segment is of the form ((index, value), (index, value))
     segments = [((2*i,data[2*i]), (2*i+1,data[2*i+1])) for i in xrange(n/2)]
 
-    # create linked list of residuals for each pair 
-    # of consecutive segments
-    residuals = llist.dllist()
+    # create linked list of pairs of segments
+    # and a heap dictionary of (pair -> sqr_residual) 
+    pairs = llist.dllist()
+    res_heap = hd.heapdict()
 
     for i in xrange(len(segments)-1):
+        # create the pair
         left = segments[i]
         right = segments[i+1]
+        seg_pair = (left, right)
+        
+        # get the squared residual
         res = sqr_residual(merge_segs(left, right), data)
-        seg_pair = (left, right, res)
-        residuals.append(seg_pair)
 
-    min_heap = hd.heapdict()
+        # add to linked list and heap
+        node = pairs.append(seg_pair)
+        res_heap[node] = res
 
-    for r in residuals:
-        min_heap[r] = r[2]
+    ## MERGE STEP
+    # merge segments while number of segments at most n/k
+    while len(pairs) > n/k:
+        pair = res_heap.popitem()[0]
 
-    return None
+        new_seg = merge_segs(pair.value[0], pair.value[1])
+
+        # update second segment of left pair in linked list and also
+        # delete old left pair from heap and re-add new pair with new res
+        left = pair.prev
+        if left != None:
+            del res_heap[left]
+            lpair = left.value
+            left.value = (lpair[0], new_seg)
+            merged = merge_segs(left.value[0], left.value[1])
+            res_heap[left] = sqr_residual(merged, data)
+
+        # update first segment of right pair
+        right = pair.next
+        if right != None:
+            del res_heap[right]
+            rpair = right.value
+            right.value = (new_seg, rpair[1])
+            merged = merge_segs(right.value[0], right.value[1])
+            res_heap[right] = sqr_residual(merged, data)
+
+        # remove old pair from pairs linked list
+        pairs.remove(pair)
+
+
+    # form a list of (index, value) keeping 
+    # only the values after being segmented
+    segmented_data = []
+
+    # retrieve unique segments
+    head = pairs.first
+    while head != None:
+        unique_seg = head.value[0]
+        segmented_data.append(unique_seg[0])
+        segmented_data.append(unique_seg[1])
+        head = head.next
+
+    # add the last data point
+    segmented_data.append(pairs.last.value[1][1])
+
+    return segmented_data
