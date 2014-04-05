@@ -27,8 +27,6 @@ def parse_csv(filepath):
 
     # extract dates and data into two separate lists
     dates, data = zip(*combined_data)
-    dates = list(dates)
-    data = list(data)
 
     # reverse order
     data = data[::-1]
