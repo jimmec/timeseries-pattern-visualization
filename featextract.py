@@ -22,16 +22,18 @@ def compute_simple_trend_features(window):
     in http://www.cs.ucsb.edu/~nanli/publications/stock_pattern.pdf
     and returns a list of N+1 features 
     '''
-    midfeats = [(window[i]-window[i-1])/(window[i-1]-window[i-2]) 
+    midfeats = [(window[i][1]-window[i-1][1])/(window[i-1][1]-window[i-2][1]) 
         for i in xrange(2,len(window))]
-    feats = [(window[1]-window[0])/abs(window[1]-window[0])]
-        .extend(midfeats)
-        .append((window[-1]-window[1])/abs(window[2]-window[1]))
+    feats = [(window[1][1]-window[0][1])/abs(window[1][1]-window[0][1])]
+    feats.extend(midfeats)
+    feats.append((window[-1][1]-window[1][1])/abs(window[2][1]-window[1][1]))
 
     return feats
 
     
-def extract_features(data, length, compute_feature):
+def extract_features(data, 
+                    length, 
+                    compute_feature=compute_simple_trend_features):
     '''Given data as a list of (index,value) pairs,
     and 1<length<len(data),
     extracts features for sliding windows of width length
@@ -41,7 +43,7 @@ def extract_features(data, length, compute_feature):
         raise Exception(
             ('Invalid window length=',length, ', data length=',len(data)))
 
-    return [(compute_feature(data[i:i+length])) 
+    return [compute_feature(data[i:i+length]) 
         for i in xrange(len(data)-length+1)]
     
 
