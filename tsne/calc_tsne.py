@@ -17,7 +17,7 @@ import sys
 import os
 from numpy import *
 
-def calc_tsne(dataMatrix,NO_DIMS=2,PERPLEX=30,INITIAL_DIMS=30,LANDMARKS=1):
+def calc_tsne(dataMatrix, folderPrefix = '', NO_DIMS=2,PERPLEX=30,INITIAL_DIMS=30,LANDMARKS=1):
     """
     This is the main function.
     dataMatrix is a 2D numpy array containing your data (each row is a data point)
@@ -26,9 +26,9 @@ def calc_tsne(dataMatrix,NO_DIMS=2,PERPLEX=30,INITIAL_DIMS=30,LANDMARKS=1):
     """
     
     dataMatrix=PCA(dataMatrix,INITIAL_DIMS)
-    writeDat(dataMatrix,NO_DIMS,PERPLEX,LANDMARKS)
-    tSNE()
-    Xmat,LM,costs=readResult()
+    writeDat(dataMatrix,folderPrefix,NO_DIMS,PERPLEX,LANDMARKS)
+    tSNE(folderPrefix)
+    Xmat,LM,costs=readResult(folderPrefix)
     clearData()
     if LANDMARKS==1:
         X=reOrder(Xmat,LM)
@@ -59,7 +59,7 @@ def readbin(type,file) :
     """
     return unpack(type,file.read(calcsize(type)))
 
-def writeDat(dataMatrix,NO_DIMS,PERPLEX,LANDMARKS):
+def writeDat(dataMatrix,prefix,NO_DIMS,PERPLEX,LANDMARKS):
     """
     Generates data.dat
     """
@@ -74,27 +74,28 @@ def writeDat(dataMatrix,NO_DIMS,PERPLEX,LANDMARKS):
             f.write(pack('=d',el))
     f.close()
 
-
-def tSNE():
+def tSNE(prefix):
     """
     Calls the tsne c++ implementation depending on the platform
     """
     platform=sys.platform
+    if prefix == '':
+        prefix = './'
     print'Platform detected : %s'%platform
     if platform in ['mac', 'darwin'] :
-        cmd='./tSNE_maci'
+        cmd=prefix+'tSNE_maci'
     elif platform == 'win32' :
-        cmd='./tSNE_win'
+        cmd=prefix+'tSNE_win'
     elif platform == 'linux2' :
-        cmd='./tSNE_linux'
+        cmd=prefix+'tSNE_linux'
     else :
         print 'Not sure about the platform, we will try linux version...'
-        cmd='./tSNE_linux'
+        cmd=prefix+'tSNE_linux'
     print 'Calling executable "%s"'%cmd
     os.system(cmd)
     
 
-def readResult():
+def readResult(prefix):
     """
     Reads result from result.dat
     """
