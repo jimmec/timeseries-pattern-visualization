@@ -1,12 +1,13 @@
 #!/bin/python2
 import os
+import sys
 import numpy as np
 from matplotlib.pyplot import figure, show
 import matplotlib.gridspec as gridspec
 from featuregenerator import preprocess as pp
 from tsne import calc_tsne as tsne
 
-def run(infile, outfile, k, l, max_error=float('inf')):
+def run(infile, outfile, k, l, use_relative_err, max_error=float('inf')):
     # extract features and segmented data from CSV file
     features, segd, dates, data = pp.gen_simple_features(infile, outfile, k, l, max_error)
 
@@ -17,9 +18,9 @@ def run(infile, outfile, k, l, max_error=float('inf')):
     tsneLocation = os.path.dirname(os.path.realpath(tsne.__file__)) + "/"
     result = tsne.calc_tsne(features, folderPrefix = tsneLocation)
 
-    interactive_plot(result, segd, dates, data, l)
+    interactive_plot(result, segd, dates, data, k, l)
 
-def interactive_plot(result, segd, dates, data, windowlength):
+def interactive_plot(result, segd, dates, data, seglength, windowlength):
     x,y = zip(*result)
 
     fig = figure(figsize=(8,10))
@@ -29,6 +30,11 @@ def interactive_plot(result, segd, dates, data, windowlength):
     segmentplot = fig.add_subplot(gs[1])
     
     scatterplot.scatter(x, y, picker=True)
+    scatterplot.set_title(
+        'segment length: {}, window length:{}'.format(seglength,windowlength))
+
+    # add a dot used to highlight the selected point
+    dot = scatterplot.scatter(x[0],y[0])
 
     def onpick(event):
         # get segment to display
@@ -36,6 +42,10 @@ def interactive_plot(result, segd, dates, data, windowlength):
         seg = segd[ind: ind + windowlength]
         seg_inds, seg_vals = zip(*seg)
         seg_dates = [dates[i] for i in seg_inds]
+
+        # highlight it
+        dot.set_offsets((x[ind],y[ind]))
+        dot.set_facecolors('r')
 
         # update plot
         segmentplot.clear()
@@ -62,15 +72,21 @@ if __name__ == '__main__':
 
     aparser = argparse.ArgumentParser(description=
                 'Visualize stock segments extracted from Yahoo Finance')
-    aparser.add_argument(dest='csvFile', 
+    aparser.add_argument('-in', 
+        dest='csvFile', 
+        default=sys.stdin,
         type=argparse.FileType('rb'),
-        help='Path to .csv file')
+        help='Path to .csv file, reads from stdin if not specified')
     aparser.add_argument(dest='segmentLength', 
         type=int,
         help='ALG. PARAM: Average length of segment')
     aparser.add_argument(dest='windowLength', 
         type=int,
         help='ALG. PARAM: Length of sliding window')
+    aparser.add_argument('-r', dest='use_relative_err',
+        action='store_true',
+        default=False,
+        help='ALG. PARAM: Use relative residuals for segmentation')
     aparser.add_argument('-o', dest='outputFile', 
         type=argparse.FileType('w'),
         default=None,
