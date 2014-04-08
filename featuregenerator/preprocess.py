@@ -28,6 +28,7 @@ def csv_import(csvfile):
 
     # reverse order
     data = data[::-1]
+    dates = dates[::-1]
     
     # enumerate it for the index
     return dates, data
@@ -50,7 +51,8 @@ def gen_simple_features(inpath, outfile, k, l, max_error=float('inf')):
     # import Yahoo stock data and dates
     dates, data = csv_import(inpath)
     # segment data
-    segd = segmenter.bottom_up(data, k, max_error)
+    segd = segmenter.bottom_up(data, k,
+    calc_error=segmenter.relative_sqr_residual, max_error=max_error)
     # remove consecutive duplicates to eliminate 
     # possibility of division by zero
     remove_consecutive_duplicates(segd)
@@ -67,9 +69,11 @@ if __name__ == "__main__":
 
     aparser = argparse.ArgumentParser(description=
                 'Preprocess time series from raw csv file')
-    aparser.add_argument(dest='csvFile', 
+    aparser.add_argument('-in',
+        dest='csvFile', 
+        default=sys.stdin,
         type=argparse.FileType('rb'),
-        help='Path to .csv file')
+        help='Path to .csv file, reads from stdin if not specified')
     aparser.add_argument(dest='segmentLength', 
         type=int,
         help='ALG. PARAM: Average length of segment')
