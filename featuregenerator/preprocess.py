@@ -47,6 +47,7 @@ def remove_consecutive_duplicates(segd):
         del segd[i] 
 
 def gen_simple_features(inpath, outfile, k, l, max_error=float('inf')):
+    print("Running feature extraction with SEGMENTLENGTH " + str(k) + " and WINDOWLENGTH " + str(l))
     # import Yahoo stock data and dates
     dates, data = csv_import(inpath)
     # segment data
@@ -60,7 +61,7 @@ def gen_simple_features(inpath, outfile, k, l, max_error=float('inf')):
     if outfile != None:
         csv.writer(outfile, delimiter=',').writerows(features)
 
-    return features, segd, dates
+    return features, segd, dates, data
 
 if __name__ == "__main__":
     import argparse

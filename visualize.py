@@ -8,7 +8,7 @@ from tsne import calc_tsne as tsne
 
 def run(infile, outfile, k, l, max_error=float('inf')):
     # extract features and segmented data from CSV file
-    features, segd, dates = pp.gen_simple_features(infile, outfile, k, l, max_error)
+    features, segd, dates, data = pp.gen_simple_features(infile, outfile, k, l, max_error)
 
     # convert to numpy 2-D array
     features = np.array(features)
@@ -17,9 +17,9 @@ def run(infile, outfile, k, l, max_error=float('inf')):
     tsneLocation = os.path.dirname(os.path.realpath(tsne.__file__)) + "/"
     result = tsne.calc_tsne(features, folderPrefix = tsneLocation)
 
-    interactive_plot(result, segd, dates, l)
+    interactive_plot(result, segd, dates, data, l)
 
-def interactive_plot(result, segd, dates, windowlength):
+def interactive_plot(result, segd, dates, data, windowlength):
     x,y = zip(*result)
 
     fig = figure(figsize=(8,10))
@@ -39,7 +39,12 @@ def interactive_plot(result, segd, dates, windowlength):
 
         # update plot
         segmentplot.clear()
+        # plot the segment
         segmentplot.plot(seg_inds, seg_vals, 'r-')
+        # plot the original un-segmented series
+        segmentplot.plot(range(seg_inds[0], seg_inds[-1] + 1), 
+            data[seg_inds[0]:(seg_inds[-1]+1)])
+
         # update with correct dates
         tickinds = segmentplot.xaxis.get_majorticklocs()
         tickdates = [dates[int(tickinds[0])]] + ['']*(len(tickinds)-2) + [dates[int(tickinds[-1])]]
