@@ -47,7 +47,7 @@ def remove_consecutive_duplicates(segd):
     for i in remove[::-1]:
         del segd[i] 
 
-def gen_simple_features(inpath, outfile, k, l, 
+def gen_simple_features(inpath, k, l, 
     use_relative_err=False,
     max_error=float('inf')):
     print("Running feature extraction with SEGMENTLENGTH " + str(k) + " and WINDOWLENGTH " + str(l))
@@ -66,10 +66,7 @@ def gen_simple_features(inpath, outfile, k, l,
     remove_consecutive_duplicates(segd)
     # generate features 
     features = fex.extract_features(segd, l)
-
-    if outfile != None:
-        csv.writer(outfile, delimiter=',').writerows(features)
-
+    
     return features, segd, dates, data
 
 if __name__ == "__main__":

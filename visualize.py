@@ -2,23 +2,48 @@
 import os
 import sys
 import numpy as np
+import cPickle as pkl
 from matplotlib.pyplot import figure, show
 import matplotlib.gridspec as gridspec
 from featuregenerator import preprocess as pp
 from tsne import calc_tsne as tsne
 
-def run(infile, outfile, k, l, use_relative_err, max_error=float('inf')):
-    # extract features and segmented data from CSV file
-    features, segd, dates, data = pp.gen_simple_features(infile, outfile, k, l, max_error)
+def run(infile, pklpath, k, l, use_relative_err, max_error=float('inf')):
+    if infile.name.endswith('.pkl'):
+        print("Using previously computed data from " + infile.name)
+        result, data, dates, segd, features, k, l = depickle_interm(infile)
+    else:
+        if k==None or l==None:
+            print("Error: -k and -l must be specified if input file is not .pkl")
+            return
+        print("Generating features from Yahoo Finance CSV file " + infile.name)
+        # extract features and segmented data from CSV file
+        features, segd, dates, data = pp.gen_simple_features(infile, k, l, max_error)
 
-    # convert to numpy 2-D array
-    features = np.array(features)
+        # convert to numpy 2-D array
+        features = np.array(features)
 
-    # run tsne
-    tsneLocation = os.path.dirname(os.path.realpath(tsne.__file__)) + "/"
-    result = tsne.calc_tsne(features, folderPrefix = tsneLocation)
+        # run tsne
+        tsneLocation = os.path.dirname(os.path.realpath(tsne.__file__)) + "/"
+        result = tsne.calc_tsne(features, folderPrefix = tsneLocation)
 
+        if pklpath != None:
+            pickle_interm((result, data, dates, segd, features, k, l), pklpath)
+
+    print("Generating plot")
     interactive_plot(result, segd, dates, data, k, l)
+
+def pickle_interm(data, pklpath):
+    # Format: data, dates, segd, features, k, l
+    if not pklpath.endswith('.pkl'):
+        pklpath = pklpath + '.pkl'
+
+    outfile = open(pklpath, 'wb')
+    pkl.dump(data, outfile)
+    outfile.close()
+
+def depickle_interm(pklfile):
+    return pkl.load(pklfile)
 
 def interactive_plot(result, segd, dates, data, seglength, windowlength):
     x,y = zip(*result)
@@ -73,24 +98,26 @@ if __name__ == '__main__':
     aparser = argparse.ArgumentParser(description=
                 'Visualize stock segments extracted from Yahoo Finance')
     aparser.add_argument('-in', 
-        dest='csvFile', 
+        dest='inputFile', 
         default=sys.stdin,
         type=argparse.FileType('rb'),
-        help='Path to .csv file, reads from stdin if not specified')
-    aparser.add_argument(dest='segmentLength', 
+        help='Path to .csv or .pkl file, reads from stdin if not specified')
+    aparser.add_argument('-k', dest='segmentLength', 
         type=int,
+        default=None,
         help='ALG. PARAM: Average length of segment')
-    aparser.add_argument(dest='windowLength', 
+    aparser.add_argument('-l', dest='windowLength', 
         type=int,
+        default=None,
         help='ALG. PARAM: Length of sliding window')
     aparser.add_argument('-r', dest='use_relative_err',
         action='store_true',
         default=False,
         help='ALG. PARAM: Use relative residuals for segmentation')
-    aparser.add_argument('-o', dest='outputFile', 
-        type=argparse.FileType('w'),
+    aparser.add_argument('-o', dest='storeLoc', 
+        type=str,
         default=None,
-        help='Optional location to store extracted features as CSV')
+        help='Optional location to store all intermediate data using Pickle')
     aparser.add_argument('-e', dest='maxerror', 
         type=float,
         default=float('inf'),
@@ -99,8 +126,6 @@ if __name__ == '__main__':
     args = aparser.parse_args()
 
     try:
-        run(args.csvFile, args.outputFile, args.segmentLength, args.windowLength, args.maxerror)
+        run(args.inputFile, args.storeLoc, args.segmentLength, args.windowLength, args.maxerror)
     finally:
-        args.csvFile.close()
-        if args.outputFile != None:
-            args.outputFile.close()
+        args.inputFile.close()
