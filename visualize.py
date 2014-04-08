@@ -7,9 +7,11 @@ import matplotlib.gridspec as gridspec
 from featuregenerator import preprocess as pp
 from tsne import calc_tsne as tsne
 
-def run(infile, outfile, k, l, max_error=float('inf')):
+def run(infile, outfile, k, l, use_relative_err, max_error=float('inf')):
     # extract features and segmented data from CSV file
-    features, segd, dates = pp.gen_simple_features(infile, outfile, k, l, max_error)
+    features, segd, dates = pp.gen_simple_features(infile, 
+                                outfile, k, l,
+                                use_relative_err, max_error)
 
     # convert to numpy 2-D array
     features = np.array(features)
@@ -78,6 +80,10 @@ if __name__ == '__main__':
     aparser.add_argument(dest='windowLength', 
         type=int,
         help='ALG. PARAM: Length of sliding window')
+    aparser.add_argument('-r', dest='use_relative_err',
+        action='store_true',
+        default=False,
+        help='ALG. PARAM: Use relative residuals for segmentation')
     aparser.add_argument('-o', dest='outputFile', 
         type=argparse.FileType('w'),
         default=None,

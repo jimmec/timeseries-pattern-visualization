@@ -47,13 +47,18 @@ def remove_consecutive_duplicates(segd):
     for i in remove[::-1]:
         del segd[i] 
 
-def gen_simple_features(inpath, outfile, k, l, max_error=float('inf')):
+def gen_simple_features(inpath, outfile, k, l, 
+    use_relative_err=False,
+    max_error=float('inf')):
     # import Yahoo stock data and dates
     dates, data = csv_import(inpath)
     # segment data
-    segd = segmenter.bottom_up(data, k,
-        calc_error=segmenter.relative_sqr_residual, 
-        max_error=max_error)
+    if use_relative_err:
+        segd = segmenter.bottom_up(data, k,
+            calc_error=segmenter.relative_sqr_residual, 
+            max_error=max_error)
+    else:
+        segd = segmenter.bottom_up(data,k,max_error=max_error)
     # remove consecutive duplicates to eliminate 
     # possibility of division by zero
     remove_consecutive_duplicates(segd)
