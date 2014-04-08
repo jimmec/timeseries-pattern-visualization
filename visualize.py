@@ -1,5 +1,6 @@
 #!/bin/python2
 import os
+import sys
 import numpy as np
 from matplotlib.pyplot import figure, show
 import matplotlib.gridspec as gridspec
@@ -57,9 +58,11 @@ if __name__ == '__main__':
 
     aparser = argparse.ArgumentParser(description=
                 'Visualize stock segments extracted from Yahoo Finance')
-    aparser.add_argument(dest='csvFile', 
+    aparser.add_argument('-in', 
+        dest='csvFile', 
+        default=sys.stdin,
         type=argparse.FileType('rb'),
-        help='Path to .csv file')
+        help='Path to .csv file, reads from stdin if not specified')
     aparser.add_argument(dest='segmentLength', 
         type=int,
         help='ALG. PARAM: Average length of segment')
