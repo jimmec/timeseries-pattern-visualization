@@ -13,9 +13,6 @@ def run(infile, pklpath, k, l, use_relative_err, max_error=float('inf')):
         print("Using previously computed data from " + infile.name)
         result, data, dates, segd, features, k, l = depickle_interm(infile)
     else:
-        if k==None or l==None:
-            print("Error: -k and -l must be specified if input file is not .pkl")
-            return
         print("Generating features from Yahoo Finance CSV file " + infile.name)
         # extract features and segmented data from CSV file
         features, segd, dates, data = pp.gen_simple_features(infile, k, l, max_error)
@@ -97,8 +94,7 @@ if __name__ == '__main__':
 
     aparser = argparse.ArgumentParser(description=
                 'Visualize stock segments extracted from Yahoo Finance')
-    aparser.add_argument('-in', 
-        dest='inputFile', 
+    aparser.add_argument('-in', dest='inputFile', 
         default=sys.stdin,
         type=argparse.FileType('rb'),
         help='Path to .csv or .pkl file, reads from stdin if not specified')
@@ -124,8 +120,14 @@ if __name__ == '__main__':
         help='Maximum allowed square residual during SEGMENTATION process')
 
     args = aparser.parse_args()
+    k = args.segmentLength
+    l = args.windowLength
+
+    if (not args.inputFile.name.endswith('.pkl')) and (k==None or l==None):
+        aparser.print_usage()
+        sys.exit("ERROR: -k and -l must be specified if input file is not .pkl")
 
     try:
-        run(args.inputFile, args.storeLoc, args.segmentLength, args.windowLength, args.maxerror)
+        run(args.inputFile, args.storeLoc,  k, l, args.maxerror)
     finally:
         args.inputFile.close()
