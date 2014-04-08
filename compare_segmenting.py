@@ -1,4 +1,5 @@
 #!/bin/python2
+import sys
 import matplotlib.dates as mdates
 from matplotlib.pyplot import figure, show, subplots
 from featuregenerator import preprocess as pp
@@ -9,6 +10,11 @@ def run(infile, k, max_error=float('inf')):
     dates, data = pp.csv_import(infile)
     segd1 = sgt.bottom_up(data,k,calc_error=sgt.sqr_residual)
     segd2 = sgt.bottom_up(data,k,calc_error=sgt.relative_sqr_residual)
+
+    # output some statistics
+    print 'original data points: %d' % len(data)
+    print 'square residual data points: %d' % len(segd1)
+    print 'rel. square res data points: %d' % len(segd2)
 
     # convert dates to matplotlib.dates
     dates = map(mdates.strpdate2num('%Y-%m-%d'),dates)
@@ -58,5 +64,3 @@ if __name__ == '__main__':
         run(args.csvFile, args.segmentLength, args.maxerror)
     finally:
         args.csvFile.close()
-        if args.outputFile != None:
-            args.outputFile.close()

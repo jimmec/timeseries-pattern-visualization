@@ -52,7 +52,8 @@ def gen_simple_features(inpath, outfile, k, l, max_error=float('inf')):
     dates, data = csv_import(inpath)
     # segment data
     segd = segmenter.bottom_up(data, k,
-    calc_error=segmenter.relative_sqr_residual, max_error=max_error)
+        calc_error=segmenter.relative_sqr_residual, 
+        max_error=max_error)
     # remove consecutive duplicates to eliminate 
     # possibility of division by zero
     remove_consecutive_duplicates(segd)

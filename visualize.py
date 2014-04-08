@@ -18,9 +18,9 @@ def run(infile, outfile, k, l, max_error=float('inf')):
     tsneLocation = os.path.dirname(os.path.realpath(tsne.__file__)) + "/"
     result = tsne.calc_tsne(features, folderPrefix = tsneLocation)
 
-    interactive_plot(result, segd, dates, l)
+    interactive_plot(result, segd, dates, k, l)
 
-def interactive_plot(result, segd, dates, windowlength):
+def interactive_plot(result, segd, dates, seglength, windowlength):
     x,y = zip(*result)
 
     fig = figure(figsize=(8,10))
@@ -30,6 +30,11 @@ def interactive_plot(result, segd, dates, windowlength):
     segmentplot = fig.add_subplot(gs[1])
     
     scatterplot.scatter(x, y, picker=True)
+    scatterplot.set_title(
+        'segment length: {}, window length:{}'.format(seglength,windowlength))
+
+    # add a dot used to highlight the selected point
+    dot = scatterplot.scatter(x[0],y[0])
 
     def onpick(event):
         # get segment to display
@@ -37,6 +42,10 @@ def interactive_plot(result, segd, dates, windowlength):
         seg = segd[ind: ind + windowlength]
         seg_inds, seg_vals = zip(*seg)
         seg_dates = [dates[i] for i in seg_inds]
+
+        # highlight it
+        dot.set_offsets((x[ind],y[ind]))
+        dot.set_facecolors('r')
 
         # update plot
         segmentplot.clear()
