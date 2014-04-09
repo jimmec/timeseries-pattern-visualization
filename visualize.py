@@ -15,7 +15,7 @@ def run(infile, pklpath, k, l, use_relative_err, max_error=float('inf')):
     else:
         print("Generating features from Yahoo Finance CSV file " + infile.name)
         # extract features and segmented data from CSV file
-        features, segd, dates, data = pp.gen_simple_features(infile, k, l, max_error)
+        features, segd, dates, data = pp.gen_simple_features(infile, k, l, use_relative_err, max_error)
 
         # convert to numpy 2-D array
         features = np.array(features)
@@ -28,7 +28,7 @@ def run(infile, pklpath, k, l, use_relative_err, max_error=float('inf')):
             pickle_interm((result, data, dates, segd, features, k, l), pklpath)
 
     print("Generating plot")
-    interactive_plot(result, segd, dates, data, k, l)
+    interactive_plot(result, segd, dates, data, k, l, features)
 
 def pickle_interm(data, pklpath):
     # Format: data, dates, segd, features, k, l
@@ -42,7 +42,8 @@ def pickle_interm(data, pklpath):
 def depickle_interm(pklfile):
     return pkl.load(pklfile)
 
-def interactive_plot(result, segd, dates, data, seglength, windowlength):
+def interactive_plot(result, segd, dates, data, seglength, windowlength, features):
+
     x,y = zip(*result)
 
     fig = figure(figsize=(8,10))
@@ -60,7 +61,8 @@ def interactive_plot(result, segd, dates, data, seglength, windowlength):
 
     def onpick(event):
         # get segment to display
-        ind = event.ind[0]
+        ind = event.ind[np.random.randint(0,len(event.ind))]
+        print(features[ind])
         seg = segd[ind: ind + windowlength]
         seg_inds, seg_vals = zip(*seg)
         seg_dates = [dates[i] for i in seg_inds]
@@ -75,14 +77,21 @@ def interactive_plot(result, segd, dates, data, seglength, windowlength):
         segmentplot.plot(seg_inds, seg_vals, 'r-')
         # plot the original un-segmented series
         segmentplot.plot(range(seg_inds[0], seg_inds[-1] + 1), 
-            data[seg_inds[0]:(seg_inds[-1]+1)])
+            data[seg_inds[0]:(seg_inds[-1]+1)], 'k:')
 
         # update with correct dates
         tickinds = segmentplot.xaxis.get_majorticklocs()
-        tickdates = [dates[int(tickinds[0])]] + ['']*(len(tickinds)-2) + [dates[int(tickinds[-1])]]
-        segmentplot.set_xticklabels(tickdates)
-        segmentplot.set_yticklabels([])
 
+        if int(tickinds[-1]) >= len(dates):
+            end = len(dates)-1
+        else:
+            end = int(tickinds[-1])
+
+        tickdates = [dates[int(tickinds[0])]] + ['']*(len(tickinds)-2) + [dates[end]]
+        segmentplot.set_xticklabels(tickdates)
+
+        # segmentplot.set_yticklabels([])
+        
         fig.canvas.draw()
 
     #fig.savefig('')
@@ -128,6 +137,6 @@ if __name__ == '__main__':
         sys.exit("ERROR: -k and -l must be specified if input file is not .pkl")
 
     try:
-        run(args.inputFile, args.storeLoc,  k, l, args.maxerror)
+        run(args.inputFile, args.storeLoc,  k, l, args.use_relative_err, args.maxerror)
     finally:
         args.inputFile.close()

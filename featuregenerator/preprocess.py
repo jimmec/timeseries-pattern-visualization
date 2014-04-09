@@ -56,6 +56,7 @@ def gen_simple_features(inpath, k, l,
     dates, data = csv_import(inpath)
     # segment data
     if use_relative_err:
+        print("Using relative error for segmenter")
         segd = segmenter.bottom_up(data, k,
             calc_error=segmenter.relative_sqr_residual, 
             max_error=max_error)
@@ -66,7 +67,7 @@ def gen_simple_features(inpath, k, l,
     remove_consecutive_duplicates(segd)
     # generate features 
     features = fex.extract_features(segd, l)
-    
+
     return features, segd, dates, data
 
 if __name__ == "__main__":
